@@ -1,6 +1,6 @@
-## light coroutine c++ api  
+## light coroutine c++ api & coroutine Chan like as goroutine chan <- 
 
-examples: test1 test2 test3  
+examples: test1 test2 test3 test4
 
 ```{cpp}
 NoodleManager nm;  
@@ -44,5 +44,22 @@ nm.remove_all(const std::string& name);
 */
 nm.set_next(const std::string& name);
 
+
+/*
+ * create and return a channel
+*/
+Chan<T,Size> *chan = nm.new_chan<T,Size>();
+
+/* 
+ * channel operation
+ * write T from chan, will automatic yield when blocked
+*/
+chan->put(noodle*, const T&);
+
+/*
+ * channel operation
+ * read T from chan, will automatic yield when blocked
+*/
+const T& chan->get(noodle*);
 ```
 

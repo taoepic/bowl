@@ -39,6 +39,9 @@ NoodleManager::~NoodleManager() {
 	std::for_each(active_noodles.begin(), active_noodles.end(), [](Noodle *n) {
 		delete n;
 	});
+	std::for_each(chans.begin(), chans.end(), [](ChanBase* cb) {
+		delete cb;
+	});
 	delete[] stack;
 }
 

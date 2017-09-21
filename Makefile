@@ -1,4 +1,4 @@
-BINS=test1 test2 test3
+BINS=test1 test2 test3 test4
 CC=g++
 CCFLAGS=-std=c++11
 LIBS=-lstdc++
