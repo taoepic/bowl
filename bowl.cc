@@ -1,12 +1,14 @@
 #include <iostream>
 #include <list>
 #include <functional>
+#include <algorithm>
 #include <ucontext.h>
 #include "bowl.h"
 
 using namespace Bowl;
 
-Noodle::Noodle(Entry f, void *data, int ssize) : stack_size(ssize), user(data), start(f) {
+Noodle::Noodle(const std::string& n, Entry f, void *data, int ssize) 
+		: name(n), stack_size(ssize), user(data), start(f) {
 	stack = new unsigned char[stack_size];
 }
 
@@ -24,23 +26,56 @@ void Noodle::end() {
 	swapcontext(&uc, &manager->uc);
 }
 
-NoodleManager::NoodleManager(int ssize) : stack_size(ssize) {
+NoodleManager::NoodleManager(void *s, int ssize) : share(s), stack_size(ssize), exit_flag(false) {
 	stack = new unsigned char[stack_size];
 	getcontext(&uc);
 	uc.uc_link = &uc_end;
 	uc.uc_stack.ss_sp = stack;
 	uc.uc_stack.ss_size = stack_size;
-	makecontext(&uc, (void (*)(void))Bowl::noodle_manager_manage, 1, this);
+	makecontext(&uc, (void (*)(void))noodle_manager_manage, 1, this);
 }
 
 NoodleManager::~NoodleManager() {
+	std::for_each(active_noodles.begin(), active_noodles.end(), [](Noodle *n) {
+		delete n;
+	});
 	delete[] stack;
 }
 
+void NoodleManager::set_next(const std::string& name) {
+	for (auto it = active_noodles.begin(); it != active_noodles.end(); it++) {
+		if ((*it)->name == name) {
+			Noodle *n = *it;
+			active_noodles.erase(it);
+			active_noodles.push_front(n);
+			return;
+		}
+	}
+}
+
+void NoodleManager::remove(const std::string& name) {
+	for (auto it = active_noodles.begin(); it != active_noodles.end(); it++) {
+		if ((*it)->name == name) {
+			delete (*it);
+			active_noodles.erase(it);
+			return;
+		}
+	}
+}
+
+void NoodleManager::remove_all(const std::string& name) {
+	auto it = active_noodles.begin();
+	while (it != active_noodles.end()) {
+		if ((*it)->name == name) {
+			delete (*it);
+			it = active_noodles.erase(it);
+		} else
+			it++;
+	}
+}
+
 void NoodleManager::manage() {
-	while (true) {
-		if (active_noodles.size() == 0)
-			break;
+	while (active_noodles.size() > 0 && !exit_flag) {
 		Noodle* n = active_noodles.front();
 		if (n->state == Noodle::State::INIT) {
 			n->state = Noodle::State::RUNNING;
@@ -53,7 +88,7 @@ void NoodleManager::manage() {
 		} else if (n->state == Noodle::State::READY_EXIT) {
 			delete n;
 		}
-		if (active_noodles.size()) {
+		if (active_noodles.size() > 0 && !exit_flag) {
 			Noodle* m = active_noodles.front();
 			m->state = Noodle::State::RUNNING;
 			swapcontext(&uc, &m->uc);
@@ -66,8 +101,8 @@ void NoodleManager::start() {
 	swapcontext(&uc_end, &uc);
 }
 
-int NoodleManager::new_noodle(Noodle::Entry f, void *data, int ssize) {
-	Noodle *noodle = new Noodle(f, data, ssize);
+int NoodleManager::new_noodle(const std::string &name, Noodle::Entry f, void *data, int ssize) {
+	Noodle *noodle = new Noodle(name, f, data, ssize);
 	getcontext(&noodle->uc);
 	noodle->uc.uc_link = &uc;
 	noodle->uc.uc_stack.ss_sp = noodle->stack;	
@@ -78,7 +113,7 @@ int NoodleManager::new_noodle(Noodle::Entry f, void *data, int ssize) {
 	active_noodles.push_back(noodle);
 }
 
-void Bowl::noodle_manager_manage(NoodleManager *nm) {
+void NoodleManager::noodle_manager_manage(NoodleManager *nm) {
 	nm->manage();
 }
 

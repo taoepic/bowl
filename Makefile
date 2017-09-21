@@ -1,9 +1,16 @@
-%.o: %.cc
-	gcc -std=c++11 -c $^ -o $@
+BINS=test1 test2 test3
+CC=g++
+CCFLAGS=-std=c++11
+LIBS=-lstdc++
 
-test: test.o bowl.o
-	gcc -std=c++11 -o $@ $^ -lstdc++
+all: $(BINS)
+
+$(BINS): bowl.o $(BINS:%=%.o)
+	$(CC) $(CCFLAGS) -o $@ $(@:%=%.o) $< $(LIBS)
+
+%.o: %.cc
+	$(CC) $(CCFLAGS) -c $^ -o $@
 
 clean:
-	rm test *.o
+	rm $(BINS) *.o
 
