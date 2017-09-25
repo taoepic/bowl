@@ -46,18 +46,36 @@ NoodleManager::~NoodleManager() {
 }
 
 void NoodleManager::set_next(const std::string& name) {
-	for (auto it = active_noodles.begin(); it != active_noodles.end(); it++) {
+	Noodle *n = nullptr;
+	for (std::list<Noodle*>::iterator it = active_noodles.begin(); it != active_noodles.end(); it++) {
 		if ((*it)->name == name) {
-			Noodle *n = *it;
-			active_noodles.erase(it);
-			active_noodles.push_front(n);
-			return;
+			n = *it;
+			break;
 		}
+	}
+	if (n != nullptr) {
+		std::list<Noodle*>::iterator pos = ++active_noodles.begin();
+		active_noodles.insert(pos, n);
+	}
+}
+
+void NoodleManager::wakeup(const std::string& name) {
+	Noodle *n = nullptr;
+	for (std::list<Noodle*>::iterator it = active_noodles.begin(); it != active_noodles.end(); it++) {
+		if ((*it)->name == name) {
+			n = *it;
+			break;
+		}
+	}
+	if (n != nullptr) {
+		std::list<Noodle*>::iterator pos = ++active_noodles.begin();
+		active_noodles.insert(pos, n);
+		active_noodles.front()->yield();
 	}
 }
 
 void NoodleManager::remove(const std::string& name) {
-	for (auto it = active_noodles.begin(); it != active_noodles.end(); it++) {
+	for (std::list<Noodle*>::iterator it = active_noodles.begin(); it != active_noodles.end(); it++) {
 		if ((*it)->name == name) {
 			delete (*it);
 			active_noodles.erase(it);
@@ -67,7 +85,7 @@ void NoodleManager::remove(const std::string& name) {
 }
 
 void NoodleManager::remove_all(const std::string& name) {
-	auto it = active_noodles.begin();
+	std::list<Noodle*>::iterator it = active_noodles.begin();
 	while (it != active_noodles.end()) {
 		if ((*it)->name == name) {
 			delete (*it);

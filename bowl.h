@@ -83,6 +83,7 @@ public:
 	void remove(const std::string& name);
 	void remove_all(const std::string& name);
 	void set_next(const std::string& name);
+	void wakeup(const std::string& name);
 	int new_noodle(const std::string& name, Noodle::Entry f, void *data = nullptr, int ssize = Noodle::default_stack_size);
 	template<typename T, int Size = 1> 
 	Chan<T,Size>* new_chan() {

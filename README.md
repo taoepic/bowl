@@ -44,6 +44,10 @@ nm.remove_all(const std::string& name);
 */
 nm.set_next(const std::string& name);
 
+/*
+ * wakeup and yield to the specific coroutine
+*/
+nm.wakeup(const std::string& name);
 
 /*
  * create and return a channel
